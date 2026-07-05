@@ -8,14 +8,22 @@
 import SwiftUI
 
 struct ContentView: View {
+    /// Single source of truth for all sleep data, shared with every tab.
+    @State private var store = CompositionRoot.makeSleepStore()
+
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        TabView {
+            Tab("Tonight", systemImage: "moon.stars.fill") {
+                TonightView()
+            }
+            Tab("History", systemImage: "list.bullet") {
+                HistoryView()
+            }
+            Tab("Stats", systemImage: "chart.bar.fill") {
+                StatsView()
+            }
         }
-        .padding()
+        .environment(store)
     }
 }
 
