@@ -1,14 +1,13 @@
 //
 //  TonightView.swift
-//  test
+//  Somnia
 //
 
 import SwiftUI
 
 /// The main tab: start/stop live sleep tracking, or log a night manually.
-/// Composes small child views, passing them data and callbacks.
 struct TonightView: View {
-    @Environment(SleepStore.self) private var store
+    let viewModel: TonightViewModel
     @State private var showingManualLog = false
     @State private var pendingWake: PendingWake?
 
@@ -20,13 +19,13 @@ struct TonightView: View {
                 VStack(spacing: 32) {
                     Spacer()
 
-                    if let startedAt = store.sleepStartedAt {
+                    if let startedAt = viewModel.sleepStartedAt {
                         SleepInProgressView(startedAt: startedAt) {
                             pendingWake = PendingWake(wakeTime: .now)
                         }
                     } else {
                         SleepIdleView {
-                            store.startSleeping()
+                            viewModel.startSleeping()
                         }
                     }
 
@@ -44,13 +43,13 @@ struct TonightView: View {
             .navigationTitle("Tonight")
             .toolbarColorScheme(.dark, for: .navigationBar)
             .sheet(isPresented: $showingManualLog) {
-                LogSleepView()
+                LogSleepView(viewModel: CompositionRoot.makeLogSleepViewModel())
             }
-            .sheet(item: $pendingWake) { pending in
-                WakeUpView(
-                    bedtime: store.sleepStartedAt ?? pending.wakeTime,
+            .sheet(item: $pendingWake, onDismiss: viewModel.refreshTrackingState) { pending in
+                WakeUpView(viewModel: CompositionRoot.makeWakeUpViewModel(
+                    bedtime: viewModel.sleepStartedAt ?? pending.wakeTime,
                     wakeTime: pending.wakeTime
-                )
+                ))
             }
         }
     }
@@ -64,6 +63,5 @@ private struct PendingWake: Identifiable {
 }
 
 #Preview {
-    TonightView()
-        .environment(CompositionRoot.makeSleepStore())
+    TonightView(viewModel: CompositionRoot.makeTonightViewModel())
 }

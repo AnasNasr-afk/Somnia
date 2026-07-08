@@ -1,29 +1,49 @@
 //
 //  CompositionRoot.swift
-//  test
+//  Somnia
 //
 //  The only place that knows about every layer: it wires concrete
-//  Data implementations into Domain use cases, then hands the
-//  Presentation layer a ready-to-use store.
+//  Data implementations into Domain use cases and builds the
+//  ViewModels the Presentation layer needs.
 //
 
 import Foundation
 
 enum CompositionRoot {
-    static func makeSleepStore() -> SleepStore {
-        let sleepRepository = JSONSleepRepository()
-        let trackingRepository = UserDefaultsTrackingRepository()
-        let logSleep = LogSleepUseCase(repository: sleepRepository)
+    // Shared infrastructure — one instance behind all use cases.
+    private static let sleepRepository = JSONSleepRepository()
+    private static let trackingRepository = UserDefaultsTrackingRepository()
 
-        return SleepStore(
+    private static var logSleep: LogSleepUseCase {
+        LogSleepUseCase(repository: sleepRepository)
+    }
+
+    private static var trackSleep: TrackSleepUseCase {
+        TrackSleepUseCase(trackingRepository: trackingRepository, logSleep: logSleep)
+    }
+
+    // MARK: - ViewModel factories
+
+    static func makeTonightViewModel() -> TonightViewModel {
+        TonightViewModel(trackSleep: trackSleep)
+    }
+
+    static func makeWakeUpViewModel(bedtime: Date, wakeTime: Date) -> WakeUpViewModel {
+        WakeUpViewModel(bedtime: bedtime, wakeTime: wakeTime, trackSleep: trackSleep)
+    }
+
+    static func makeLogSleepViewModel() -> LogSleepViewModel {
+        LogSleepViewModel(logSleep: logSleep)
+    }
+
+    static func makeHistoryViewModel() -> HistoryViewModel {
+        HistoryViewModel(
             getHistory: GetSleepHistoryUseCase(repository: sleepRepository),
-            getStatistics: GetSleepStatisticsUseCase(repository: sleepRepository),
-            logSleep: logSleep,
-            deleteSleep: DeleteSleepUseCase(repository: sleepRepository),
-            trackSleep: TrackSleepUseCase(
-                trackingRepository: trackingRepository,
-                logSleep: logSleep
-            )
+            deleteSleep: DeleteSleepUseCase(repository: sleepRepository)
         )
+    }
+
+    static func makeStatsViewModel() -> StatsViewModel {
+        StatsViewModel(getStatistics: GetSleepStatisticsUseCase(repository: sleepRepository))
     }
 }

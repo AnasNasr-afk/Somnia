@@ -32,7 +32,7 @@ Presentation ──▶ Domain ◀── Data
 |---|---|---|
 | **Domain** | Entities (`SleepSession`, `SleepStatistics`), repository protocols, use cases | Nothing (pure Swift) |
 | **Data** | `JSONSleepRepository`, `UserDefaultsTrackingRepository`, DTOs | Domain protocols |
-| **Presentation** | SwiftUI views split into small components, `SleepStore` (@Observable) | Domain use cases |
+| **Presentation** | MVVM: one `@Observable` ViewModel per screen + SwiftUI views split into small components | Domain use cases |
 | **App** | `SomniaApp`, `ContentView`, `CompositionRoot` | Everything (wiring only) |
 
 Key decisions:
@@ -42,11 +42,14 @@ Key decisions:
   live session lifecycle)
 - **Codable stays in the Data layer** — `SleepSessionDTO` mirrors the domain
   entity, so the on-disk format is an implementation detail
-- **Views talk only to `SleepStore`**, which talks only to use cases; swapping
-  JSON persistence for SwiftData or HealthKit means changing one line in
-  `CompositionRoot`
-- **No Combine, no MVVM boilerplate** — modern `@Observable` +
-  `.environment()` for state
+- **MVVM in the Presentation layer** — each screen has its own ViewModel
+  (`TonightViewModel`, `HistoryViewModel`, `StatsViewModel`, plus
+  `WakeUpViewModel` and `LogSleepViewModel` for the sheets); views stay
+  declarative while form state, validation, and refresh logic live in the VM
+- **ViewModels talk only to use cases**, never to repositories or views;
+  swapping JSON persistence for SwiftData or HealthKit means changing one
+  line in `CompositionRoot`
+- **No Combine** — modern `@Observable` ViewModels observed directly by SwiftUI
 
 ## Project structure
 

@@ -1,18 +1,18 @@
 //
 //  HistoryView.swift
-//  test
+//  Somnia
 //
 
 import SwiftUI
 
 /// A list of every logged night, newest first, with swipe-to-delete.
 struct HistoryView: View {
-    @Environment(SleepStore.self) private var store
+    let viewModel: HistoryViewModel
 
     var body: some View {
         NavigationStack {
             Group {
-                if store.sessions.isEmpty {
+                if viewModel.sessions.isEmpty {
                     ContentUnavailableView(
                         "No Sleep Logged",
                         systemImage: "moon.zzz",
@@ -20,11 +20,11 @@ struct HistoryView: View {
                     )
                 } else {
                     List {
-                        ForEach(store.sessions) { session in
+                        ForEach(viewModel.sessions) { session in
                             SessionRow(session: session)
                                 .swipeActions {
                                     Button("Delete", systemImage: "trash", role: .destructive) {
-                                        store.delete(session)
+                                        viewModel.delete(session)
                                     }
                                 }
                         }
@@ -32,11 +32,13 @@ struct HistoryView: View {
                 }
             }
             .navigationTitle("History")
+            .onAppear {
+                viewModel.load()
+            }
         }
     }
 }
 
 #Preview {
-    HistoryView()
-        .environment(CompositionRoot.makeSleepStore())
+    HistoryView(viewModel: CompositionRoot.makeHistoryViewModel())
 }

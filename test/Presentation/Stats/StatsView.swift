@@ -1,18 +1,18 @@
 //
 //  StatsView.swift
-//  test
+//  Somnia
 //
 
 import SwiftUI
 
 /// Weekly sleep chart plus summary statistics.
 struct StatsView: View {
-    @Environment(SleepStore.self) private var store
+    let viewModel: StatsViewModel
 
     var body: some View {
         NavigationStack {
             ScrollView {
-                if store.sessions.isEmpty {
+                if !viewModel.hasData {
                     ContentUnavailableView(
                         "No Data Yet",
                         systemImage: "chart.bar",
@@ -21,22 +21,22 @@ struct StatsView: View {
                     .padding(.top, 80)
                 } else {
                     VStack(spacing: 16) {
-                        WeeklySleepChart(dailyTotals: store.statistics.dailyTotals)
+                        WeeklySleepChart(dailyTotals: viewModel.statistics.dailyTotals)
 
                         HStack(spacing: 16) {
                             StatCard(
                                 title: "Avg. Duration",
-                                value: store.statistics.averageDuration?.formattedHoursMinutes ?? "—",
+                                value: viewModel.statistics.averageDuration?.formattedHoursMinutes ?? "—",
                                 icon: "clock.fill"
                             )
                             StatCard(
                                 title: "Avg. Quality",
-                                value: store.statistics.averageQuality.map { String(format: "%.1f / 5", $0) } ?? "—",
+                                value: viewModel.statistics.averageQuality.map { String(format: "%.1f / 5", $0) } ?? "—",
                                 icon: "star.fill"
                             )
                         }
 
-                        if let best = store.statistics.bestNight {
+                        if let best = viewModel.statistics.bestNight {
                             StatCard(
                                 title: "Best Night",
                                 value: "\(best.formattedDuration) on \(best.wakeTime.formatted(.dateTime.weekday(.wide).month().day()))",
@@ -48,11 +48,13 @@ struct StatsView: View {
                 }
             }
             .navigationTitle("Stats")
+            .onAppear {
+                viewModel.load()
+            }
         }
     }
 }
 
 #Preview {
-    StatsView()
-        .environment(CompositionRoot.makeSleepStore())
+    StatsView(viewModel: CompositionRoot.makeStatsViewModel())
 }

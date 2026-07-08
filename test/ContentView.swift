@@ -1,6 +1,6 @@
 //
 //  ContentView.swift
-//  test
+//  Somnia
 //
 //  Created by Anas Nasr on 05/07/2026.
 //
@@ -8,22 +8,24 @@
 import SwiftUI
 
 struct ContentView: View {
-    /// Single source of truth for all sleep data, shared with every tab.
-    @State private var store = CompositionRoot.makeSleepStore()
+    // Tab ViewModels live for the app's lifetime; each tab reloads
+    // its data onAppear so changes made elsewhere show up.
+    @State private var tonightViewModel = CompositionRoot.makeTonightViewModel()
+    @State private var historyViewModel = CompositionRoot.makeHistoryViewModel()
+    @State private var statsViewModel = CompositionRoot.makeStatsViewModel()
 
     var body: some View {
         TabView {
             Tab("Tonight", systemImage: "moon.stars.fill") {
-                TonightView()
+                TonightView(viewModel: tonightViewModel)
             }
             Tab("History", systemImage: "list.bullet") {
-                HistoryView()
+                HistoryView(viewModel: historyViewModel)
             }
             Tab("Stats", systemImage: "chart.bar.fill") {
-                StatsView()
+                StatsView(viewModel: statsViewModel)
             }
         }
-        .environment(store)
     }
 }
 
